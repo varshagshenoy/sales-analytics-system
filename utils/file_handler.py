@@ -39,3 +39,36 @@ def read_sales_data(filename):
             print(f"Error: Failed to read file with: {enc}.")
             continue
     return []
+
+
+# function to parse raw data and handle data quality issues
+def parse_transactions(raw_lines):
+    keys = ['TransactionID', 'Date', 'ProductID', 'ProductName','Quantity', 'UnitPrice', 'CustomerID', 'Region']
+    clean_data_list = []
+
+    for raw_line in raw_lines:
+        values = raw_line.split('|')
+
+        # skip rows with incorrect number of fields
+        if len(values) != len(keys):
+            continue
+
+        # map keys to values to form a dictionary for a transaction record
+        record = dict(zip(keys,values))
+
+        # handle commas within ProductName - replace with space
+        record['ProductName'] = record['ProductName'].replace(',', ' ').strip()
+
+        try:
+            # Quantity -> Remove commas and convert to int
+            record['Quantity'] = int(record['Quantity'].replace(',','').strip())
+
+            # UnitPrice -> Remove commas and convert to float
+            record['UnitPrice'] = float(record['UnitPrice'].replace(',','').strip())
+        except ValueError:
+            continue
+
+        clean_data_list.append(record)
+
+    # returns a clean list of dictionaries 
+    return clean_data_list
