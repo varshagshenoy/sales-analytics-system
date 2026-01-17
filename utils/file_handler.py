@@ -72,3 +72,82 @@ def parse_transactions(raw_lines):
 
     # returns a clean list of dictionaries 
     return clean_data_list
+
+
+# function to validate and filter transactions
+def validate_and_filter(transactions, region=None, min_amount=None, max_amount=None):
+    valid_transactions = []
+    invalid_count = 0
+    required_fields = ['TransactionID', 'Date', 'ProductID', 'ProductName', 'Quantity', 'UnitPrice', 'CustomerID', 'Region']
+
+    # ------ VALIDATION ------
+    
+    for record in transactions:
+        # validates if all required fields are present
+        if any(record[field] == '' for field in required_fields):
+            invalid_count += 1
+            continue
+
+        # validates if quantity and unit price values are greater than 0
+        if record['Quantity'] <= 0 or record['UnitPrice'] <= 0:
+            invalid_count += 1
+            continue
+
+        # validates if TransactionID starts with 'T', ProductID starts with 'P' and CustomerID starts with 'C'
+        if not (record['TransactionID'].startswith('T') and record['ProductID'].startswith('P') and record['CustomerID'].startswith('C')):
+            invalid_count += 1
+            continue
+
+        valid_transactions.append(record)
+
+    # ------ FILTER DISPLAY ------
+    
+    # display available regions
+    regions_list = sorted(set(record['Region'] for record in valid_transactions if record['Region']))
+    print(f"Available regions: {regions_list}")
+
+    # display transaction amount range (min/max)
+    amounts = [record['Quantity'] * record['UnitPrice'] for record in valid_transactions]
+    if amounts:
+        print(f"Transaction amount range: {min(amounts)} to {max(amounts)}")
+
+    # ------ FILTERING ------
+
+    filtered_by_region = 0
+    filtered_by_amount = 0
+    filtered = valid_transactions
+    
+    # filtering by region
+    if region:
+        before = len(filtered)
+        region_normalized = region.strip().lower()
+        filtered = [record for record in filtered if record['Region'].strip().lower() == region_normalized]
+        filtered_by_region = before - len(filtered)
+        print(f"Count of records after applying region filter ({region}): {len(filtered)}")
+
+    # filtering by minimum transaction amount
+    if min_amount is not None:
+        before = len(filtered)
+        filtered = [record for record in filtered if record['Quantity'] * record['UnitPrice'] >= float(min_amount)]
+        filtered_by_amount += before - len(filtered)
+        print(f"Count of records after applying min amount filter ({min_amount}): {len(filtered)}")
+
+    # filtering by maximum transaction amount
+    if max_amount is not None:
+        before = len(filtered)
+        filtered = [record for record in filtered if record['Quantity'] * record['UnitPrice'] <= float(max_amount)]
+        filtered_by_amount += before - len(filtered)
+        print(f"Count of records after applying max amount filter ({max_amount}): {len(filtered)}")
+
+    # ------ SUMMARY ------
+
+    filter_summary = {
+        'total_input': len(transactions),
+        'invalid': invalid_count,
+        'filtered_by_region': filtered_by_region,
+        'filtered_by_amount': filtered_by_amount,
+        'final_count': len(filtered)
+    }
+
+    # returns a tuple containing a list of valid filtered transactions (dictionaries), count of invalid transactions and a filter summary dictionary
+    return (filtered, invalid_count, filter_summary)
