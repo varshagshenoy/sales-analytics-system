@@ -118,3 +118,67 @@ def customer_analysis(transactions):
     # Returns dictionary of customer statistics
     return sorted_customer_stats
     
+
+# --------------- DATE-BASED ANALYSIS ---------------
+
+# ------ Daily Sales Trend ------
+
+# Analyzes sales trend by date
+def daily_sales_trend(transactions):
+    date_stats = {}
+
+    # Calculates daily revenue and count of daily transactions
+    for record in transactions:
+        date = record['Date']
+        amount = record['Quantity'] * record['UnitPrice']
+        customer = record['CustomerID']
+
+        if date not in date_stats:
+            date_stats[date] = {
+                'revenue': 0.0,
+                'transaction_count': 0,
+                'customers': set()
+            }
+        
+        date_stats[date]['revenue'] += amount
+        date_stats[date]['transaction_count'] += 1
+        date_stats[date]['customers'].add(customer)
+
+    # Counts unique customers per day - converts customer set to counts
+    for stats in date_stats.values():
+        stats['unique_customers'] = len(stats['customers'])
+        del stats['customers']
+
+    # Sorts chronologically
+    sorted_date_stats = dict(sorted(date_stats.items()))
+    
+    # Returns dictionary of daily sales statistics, sorted by date
+    return sorted_date_stats
+
+# ------ Find Peak Sales Day ------
+
+# Identifies the date with highest revenue
+def find_peak_sales_day(transactions):
+    date_stats = {}
+
+    # Aggregates revenue and transaction count per date
+    for record in transactions:
+        date = record['Date']
+        amount = record['Quantity'] * record['UnitPrice']
+
+        if date not in date_stats:
+            date_stats[date] = {
+                'revenue': 0.0,
+                'transaction_count': 0,
+            }
+
+        date_stats[date]['revenue'] += amount
+        date_stats[date]['transaction_count'] += 1
+
+    # Find peak sales day
+    items = date_stats.items()
+    peak_date, stats = max(items, key=lambda item: item[1]['revenue'])
+    
+    # returns a tuple for date with highest revenue
+    return (peak_date, stats['revenue'], stats['transaction_count'])
+
