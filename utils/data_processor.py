@@ -182,3 +182,39 @@ def find_peak_sales_day(transactions):
     # returns a tuple for date with highest revenue
     return (peak_date, stats['revenue'], stats['transaction_count'])
 
+
+# --------------- PRODUCT PERFORMANCE ---------------
+
+# ------ Low Performing Products ------
+
+# Identifies products with low sales
+def low_performing_products(transactions, threshold=10):
+    product_stats = {}
+
+    # Calculates total quantity sold and total revenue for each product
+    for record in transactions:
+        product = record['ProductName']
+        quantity = record['Quantity']
+        amount = quantity * record['UnitPrice']
+
+        if product not in product_stats:
+            product_stats[product] = {
+                'total_quantity': 0,
+                'total_revenue': 0.0,
+            }
+
+        product_stats[product]['total_quantity'] += quantity
+        product_stats[product]['total_revenue'] += amount
+
+    # Filter low-performing products - products with total quantity < threshold
+    low_performers = []
+
+    for product, stats in product_stats.items():
+        if stats['total_quantity'] < threshold:
+            low_performers.append((product, stats['total_quantity'], stats['total_revenue']))
+
+    # Sorts by total_quantity in ascending order
+    low_performers.sort(key=lambda item: item[1])
+    
+    # Returns products with low sales (list of tuples)
+    return low_performers
